@@ -1,0 +1,486 @@
+/* ==========================================================================
+   Interactive Tactical Pitch - CSS Module
+   ========================================================================== */
+
+.pitch-wrapper {
+  width: 100%;
+  aspect-ratio: 3 / 4; /* Perfect mobile vertical field proportion */
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--bg-field) 0px,
+    var(--bg-field) 40px,
+    var(--bg-field-stripe) 40px,
+    var(--bg-field-stripe) 80px
+  );
+  border: var(--border-width-thick) solid var(--primary);
+  border-radius: var(--radius-md);
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-md);
+}
+
+/* Vector Field Linings Overlay (SVG Background) */
+.pitch-linings {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='400' viewBox='0 0 300 400'%3E%3Crect x='10' y='10' width='280' height='380' fill='none' stroke='white' stroke-width='2'/%3E%3Cline x1='10' y1='200' x2='290' y2='200' stroke='white' stroke-width='2'/%3E%3Ccircle cx='150' cy='200' r='40' fill='none' stroke='white' stroke-width='2'/%3E%3Ccircle cx='150' cy='200' r='2' fill='white'/%3E%3C!-- Penalty Area Top --%3E%3Crect x='75' y='10' width='150' height='60' fill='none' stroke='white' stroke-width='2'/%3E%3Crect x='110' y='10' width='80' height='20' fill='none' stroke='white' stroke-width='2'/%3E%3Carc cx='150' cy='70' r='20' fill='none' stroke='white' stroke-width='2'/%3E%3C!-- Penalty Area Bottom --%3E%3Crect x='75' y='330' width='150' height='60' fill='none' stroke='white' stroke-width='2'/%3E%3Crect x='110' y='370' width='80' height='20' fill='none' stroke='white' stroke-width='2'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+  opacity: 0.85;
+}
+
+/* Interactive Player Node */
+.player-node {
+  position: absolute;
+  width: 74px;
+  height: 74px;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.player-node-badge {
+  width: 54px;
+  height: 54px;
+  border-radius: var(--radius-circle);
+  background-color: var(--bg-card);
+  border: var(--border-width-thick) solid var(--text-sub);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.15s ease;
+}
+
+.player-node-badge.has-gradient {
+  background-image: 
+    linear-gradient(var(--bg-card), var(--bg-card)), 
+    conic-gradient(var(--primary) var(--playtime-pct, 0%), var(--border-color) var(--playtime-pct, 0%)) !important;
+  background-origin: border-box !important;
+  background-clip: padding-box, border-box !important;
+  border-color: transparent !important;
+}
+
+.player-node-number {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-main);
+  line-height: 1;
+}
+
+.player-node-time {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--primary-dark);
+  background-color: var(--primary-light);
+  padding: 1px 4px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.player-node-name {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-main);
+  text-shadow: 0 1px 2px white, 0 1px 4px white;
+  margin-top: 4px;
+  text-align: center;
+  max-width: 86px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.player-node-pos-tag {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: var(--text-main);
+  color: var(--text-on-primary);
+  font-size: 9.5px;
+  font-weight: 800;
+  padding: 2px 5px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--bg-card);
+  line-height: 1;
+}
+
+/* Node Action states */
+.player-node:active {
+  transform: translate(-50%, -50%) scale(0.92);
+}
+
+/* Active Highlight (Running On-Field) */
+.player-node.running .player-node-badge {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-alpha);
+}
+
+/* Queue Sub State (Selected active player to Sub Out) */
+.player-node.queued-out .player-node-badge {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-light);
+  animation: pulseQueue 1.5s infinite;
+}
+
+/* Swap Selection State */
+.player-node.swap-selected .player-node-badge {
+  border-color: var(--info);
+  box-shadow: 0 0 0 4px var(--info-light);
+}
+
+/* Pitch Legend overlay */
+.pitch-legend {
+  position: absolute;
+  bottom: 8px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+}
+
+.pitch-legend-badge {
+  background-color: rgba(255, 255, 255, 0.9);
+  border: 1px solid var(--border-color);
+  padding: 3px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-sub);
+}
+
+@keyframes pulseQueue {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* ==========================================================================
+   Tactics Board overlay styles
+   ========================================================================== */
+
+.board-overlay {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 100%);
+  width: 100%;
+  max-width: 500px;
+  height: 100%;
+  background-color: var(--bg-main);
+  z-index: 300;
+  display: flex;
+  flex-direction: column;
+  padding: 16px;
+  box-sizing: border-box;
+  transition: transform 0.3s cubic-bezier(0.1, 0.9, 0.2, 1);
+  border-left: var(--border-width-thin) solid var(--border-color);
+  border-right: var(--border-width-thin) solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+}
+
+.board-overlay.active {
+  transform: translate(-50%, 0);
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 2px solid var(--text-main);
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+.board-pitch-container {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 0;
+  overflow: hidden;
+}
+
+.board-pitch-container .pitch-wrapper {
+  margin: 0 auto;
+  max-height: 100%;
+}
+
+.tactics-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  cursor: crosshair;
+}
+
+.tactics-ball {
+  position: absolute;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-circle);
+  background-color: white;
+  border: var(--border-width-thick) solid var(--text-main);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  cursor: grab;
+  z-index: 15;
+  transform: translate(-50%, -50%);
+  box-shadow: var(--shadow-md);
+  transition: transform 0.15s ease;
+}
+
+.tactics-ball:active {
+  cursor: grabbing;
+}
+
+/* Opponent Node Styles */
+.opponent-node .player-node-badge {
+  border-color: var(--danger) !important;
+  background-color: hsl(350, 100%, 96%) !important;
+}
+
+.board-player.dragging {
+  transition: none !important;
+  z-index: 1000 !important;
+  opacity: 0.9;
+  scale: 1.1;
+}
+
+.board-controls {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: var(--border-width-thin) solid var(--border-color);
+  padding-bottom: 12px;
+}
+
+.color-dot {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-circle);
+  cursor: pointer;
+  padding: 0;
+  transition: transform 0.1s ease;
+  border: none;
+}
+
+.color-dot:active {
+  transform: scale(0.9);
+}
+
+.color-dot.active {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* ==========================================================================
+   Defense Formation Picker Dropdown
+   ========================================================================== */
+
+.board-defense-picker-wrapper {
+  position: relative;
+}
+
+.board-defense-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-card);
+  border: var(--border-width-thick) solid var(--primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 500;
+  overflow: hidden;
+  /* Hidden state */
+  max-height: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease;
+}
+
+.board-defense-dropdown.open {
+  max-height: 260px;
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.board-defense-list {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: 260px;
+}
+
+.board-defense-option {
+  padding: 10px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-family);
+  cursor: pointer;
+  background: none;
+  border: none;
+  text-align: left;
+  color: var(--text-main);
+  border-bottom: var(--border-ui);
+  transition: background 0.12s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.board-defense-option:last-child {
+  border-bottom: none;
+}
+
+.board-defense-option:hover {
+  background: var(--primary-light);
+  color: var(--primary-dark);
+}
+
+.board-defense-option.active-defense {
+  background: var(--primary-alpha);
+  color: var(--primary-dark);
+  font-weight: 800;
+}
+
+.board-defense-option.no-defense-option {
+  color: var(--danger);
+  border-bottom: 2px solid var(--border-color);
+}
+
+.board-defense-option.no-defense-option:hover {
+  background: var(--danger-light);
+}
+
+/* ==========================================================================
+   Player Heatmap Styles
+   ========================================================================== */
+
+.modal-content-tall {
+  max-height: 90vh !important;
+}
+
+.modal-content-tall .modal-body {
+  max-height: 78vh !important;
+}
+
+.heatmap-pitch {
+  margin: 0 auto;
+  width: 100%;
+  max-width: 280px;
+  background: repeating-linear-gradient(
+    to bottom,
+    var(--bg-field) 0px,
+    var(--bg-field) 30px,
+    var(--bg-field-stripe) 30px,
+    var(--bg-field-stripe) 60px
+  );
+  border: var(--border-width-thick) solid var(--primary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  aspect-ratio: 3 / 4;
+  position: relative;
+}
+
+.heatmap-legend-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background-color: var(--bg-card);
+  border: var(--border-ui);
+  border-radius: var(--radius-md);
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.heatmap-legend-row:last-child {
+  margin-bottom: 0;
+}
+
+.heatmap-legend-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.role-badge {
+  display: inline-block;
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 10px;
+  font-weight: 800;
+  color: white;
+  text-transform: uppercase;
+  line-height: 1.2;
+}
+
+.role-badge.role-gk {
+  color: var(--text-main);
+  background-color: #f59e0b; /* Amber */
+}
+.role-badge.role-def {
+  background-color: var(--info);
+}
+.role-badge.role-mid {
+  background-color: var(--primary);
+}
+.role-badge.role-fw {
+  background-color: var(--danger);
+}
+
+.heatmap-stat-pills {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.heatmap-stat-pill {
+  flex: 1;
+  min-width: 80px;
+  background-color: var(--bg-main);
+  border: var(--border-ui);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.heatmap-stat-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.heatmap-stat-lbl {
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-sub);
+  text-transform: uppercase;
+}
+
+

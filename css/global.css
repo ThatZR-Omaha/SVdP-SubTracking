@@ -1,0 +1,220 @@
+/* ==========================================================================
+   Global Reset & Base Layouts - Light Athletic Club Theme
+   ========================================================================== */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body {
+  font-family: var(--font-family);
+  background-color: var(--bg-main);
+  color: var(--text-main);
+  line-height: 1.4;
+  overflow-x: hidden;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+
+/* Mobile-First App Wrapper */
+.app-container {
+  width: 100%;
+  max-width: 500px; /* Standard premium mobile view width */
+  background-color: var(--bg-main);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  min-height: 100vh;
+  border-left: var(--border-width-thin) solid var(--border-color);
+  border-right: var(--border-width-thin) solid var(--border-color);
+  box-shadow: var(--shadow-lg);
+}
+
+/* App Header */
+.app-header {
+  height: var(--header-height);
+  background-color: var(--bg-card);
+  border-bottom: var(--border-width-thick) solid var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 16px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.app-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.app-logo {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-logo-clickable {
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 2px;
+  transition: transform 0.15s ease, background-color 0.15s ease;
+  user-select: none;
+}
+
+.app-logo-clickable:hover {
+  transform: scale(1.1);
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+.app-logo-clickable:active {
+  transform: scale(0.92);
+}
+
+.icon-preset-btn {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: 24px;
+  padding: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.12s ease, border-color 0.12s ease, background 0.12s ease;
+}
+
+.icon-preset-btn:hover {
+  border-color: var(--primary);
+  background: rgba(21, 128, 61, 0.1);
+  transform: scale(1.1);
+}
+
+.icon-preset-btn.active {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary);
+  background: rgba(21, 128, 61, 0.2);
+}
+
+.app-title {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.app-subtitle {
+  font-size: 11px;
+  color: var(--text-sub);
+  text-transform: uppercase;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+
+/* View Container */
+.app-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 16px calc(var(--nav-height) + 16px) 16px; /* Extra bottom padding for floating navigation */
+  position: relative;
+}
+
+/* Tab View Switcher Routing */
+.app-view {
+  display: none;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.app-view.active {
+  display: flex;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Global Navigation - Fixed Bottom Bar */
+.app-nav {
+  position: fixed;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 500px;
+  height: var(--nav-height);
+  background-color: var(--bg-card);
+  border-top: var(--border-width-thin) solid var(--border-color);
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  z-index: 99;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+.nav-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--text-sub);
+  font-family: var(--font-family);
+  font-size: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+}
+
+.nav-tab-icon {
+  font-size: 20px;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.nav-tab:active .nav-tab-icon {
+  transform: scale(0.85);
+}
+
+.nav-tab.active {
+  color: var(--primary);
+}
+
+/* Indicators on Active Tab */
+.nav-tab.active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 20%;
+  right: 20%;
+  height: 4px;
+  background-color: var(--primary);
+  border-radius: 0 0 4px 4px;
+}
+
+/* Scroll Utility */
+.scroll-y {
+  overflow-y: auto;
+  max-height: calc(100vh - var(--header-height) - var(--nav-height) - 32px);
+}
+.scroll-y::-webkit-scrollbar {
+  width: 4px;
+}
+.scroll-y::-webkit-scrollbar-thumb {
+  background: var(--border-color-dark);
+  border-radius: var(--radius-sm);
+}

@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Soccer Sub & Stats Tracker</title>
+  
+  <!-- PWA & Mobile Web App Meta -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#15803d">
+  <link rel="manifest" href="manifest.json">
+  
+  <!-- Stylesheets -->
+  <link rel="stylesheet" href="css/variables.css">
+  <link rel="stylesheet" href="css/global.css">
+  <link rel="stylesheet" href="css/pitch.css">
+  <link rel="stylesheet" href="css/components.css">
+</head>
+<body>
+
+  <!-- Mobile-First Container -->
+  <div class="app-container">
+    
+    <!-- Top Header -->
+    <header class="app-header">
+      <div class="app-title-group">
+        <div id="header-team-icon" class="app-logo app-logo-clickable" title="Click to change team icon" style="width: 32px; height: 32px;">
+          ⚽
+        </div>
+        <div>
+          <h1 class="app-title" id="header-team-name">Select Team</h1>
+          <p class="app-subtitle" id="header-match-status">SOCCER TRACKER</p>
+        </div>
+      </div>
+      
+      <!-- Quick Actions -->
+      <button class="btn btn-sm btn-secondary" id="btn-switch-team" style="min-height: 36px;">
+        <span class="btn-icon">🔄</span> Team
+      </button>
+    </header>
+
+    <!-- Main View Routing Grid -->
+    <main class="app-main">
+
+      <!-- ==========================================
+           VIEW 1: LIVE MATCH ENGINE
+           ========================================== -->
+      <section id="view-match" class="app-view active">
+        
+        <!-- Live Match Score & Timer Controller -->
+        <div id="match-controller-section">
+          <div class="match-controller">
+            <div class="time-display">
+              <span class="time-val" id="match-timer-label">00:00</span>
+              <span class="period-val" id="match-period-label">1st Half</span>
+            </div>
+            
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-primary" id="btn-match-play-pause" style="min-width: 80px;">
+                <span id="play-pause-icon">▶</span> <span id="play-pause-text">Start</span>
+              </button>
+              <button class="btn btn-secondary" id="btn-match-next-period" title="Next Half / Reset">
+                Half ➔
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Current Score & Opponent Card -->
+        <div id="match-score-section" class="card" style="padding: 10px 14px; gap: 6px; border-width: 2px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; font-weight: 800; font-size: 16px;">
+            <span id="match-us-name" style="color: var(--primary);">Home Team</span>
+            <span style="font-size: 20px;" id="match-scoreboard"><span id="score-us">0</span> - <span id="score-them">0</span></span>
+            <span id="match-them-name" style="color: var(--text-sub);">Opponent</span>
+          </div>
+          <div style="display: flex; gap: 8px; justify-content: center; margin-top: 4px;">
+            <button class="btn btn-sm btn-secondary" id="btn-score-us-plus">+ Us Goal</button>
+            <button class="btn btn-sm btn-secondary" id="btn-score-them-plus">+ Opp Goal</button>
+            <button class="btn btn-sm btn-danger" id="btn-score-us-minus" style="padding: 4px; min-height: 28px;">-</button>
+          </div>
+        </div>
+
+        <!-- Tactical Pitch Section -->
+        <div id="match-pitch-section" style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2 class="form-label" style="margin-bottom: 0;">Tactical Field</h2>
+            <div style="display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end;">
+              <span class="pitch-legend-badge" id="field-count-label" style="font-size: 10px; background-color: var(--primary-light); color: var(--primary-dark); border-color: var(--primary);">9v9 Form</span>
+              <button class="btn btn-sm btn-secondary" id="btn-match-board-trigger" style="padding: 2px 8px; min-height: 28px;">
+                📋 Board
+              </button>
+              <button class="btn btn-sm btn-secondary" id="btn-match-swap-toggle" style="padding: 2px 8px; min-height: 28px;">
+                🔄 Swap
+              </button>
+            </div>
+          </div>
+          
+          <div class="pitch-wrapper">
+            <div class="pitch-linings"></div>
+            <!-- Rendered Dynamic Player Nodes inside Pitch -->
+            <div id="active-pitch-players"></div>
+            
+            <div class="pitch-legend">
+              <span class="pitch-legend-badge">Defenders ⬇</span>
+              <span class="pitch-legend-badge">Forwards ⬆</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pending Substitution Queue Dashboard -->
+        <div id="match-sub-queue-container" class="queue-panel" style="display: none;">
+          <div class="queue-header">
+            <span>Pending Substitutions</span>
+            <button class="btn btn-sm btn-danger" id="btn-clear-sub-queue" style="min-height: 24px; padding: 2px 6px;">Clear</button>
+          </div>
+          <div class="queue-list" id="sub-queue-list">
+            <!-- Dynamic Sub items rendered here -->
+          </div>
+          <button class="btn btn-accent" id="btn-execute-sub-queue" style="width: 100%; margin-top: 4px;">
+            Confirm &amp; Execute Plan (0)
+          </button>
+        </div>
+
+        <!-- Bench Players Grid -->
+        <div id="match-bench-section" class="card">
+          <h3 class="form-label">Available Bench</h3>
+          <div id="match-bench-list" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px;">
+            <!-- Bench players render here -->
+          </div>
+        </div>
+
+        <!-- Live Match Event Log Timeline -->
+        <div id="match-timeline-section" class="card" style="max-height: 200px;">
+          <h3 class="form-label">Match Events</h3>
+          <div class="scroll-y" id="match-event-timeline" style="display: flex; flex-direction: column; gap: 6px; font-size: 12px;">
+            <p style="color: var(--text-muted); text-align: center; padding: 12px 0;">No match events yet. Start the timer!</p>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 12px;">
+          <button class="btn btn-secondary btn-sm" id="btn-cancel-match" style="flex: 1;" title="Discard active match without saving stats">
+            ⚠️ Cancel Match
+          </button>
+          <button class="btn btn-danger btn-sm" id="btn-end-match" style="flex: 2;">
+            🛑 End &amp; Save Match Stats
+          </button>
+        </div>
+      </section>
+
+
+
+      <!-- ==========================================
+           VIEW 2: SQUAD & TEAMS MANAGER
+           ========================================== -->
+      <section id="view-squad" class="app-view">
+        
+        <!-- Multi-team Switcher card -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Team Configuration</h2>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="squad-team-selector">Active Team Profile</label>
+            <select class="form-select" id="squad-team-selector"></select>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary" id="btn-create-team-modal" style="flex: 1;">+ Add New Team</button>
+            <button class="btn btn-danger" id="btn-delete-team" style="padding: 10px;">🗑️</button>
+          </div>
+        </div>
+
+        <!-- Selected Team Setup Form -->
+        <div class="card" id="squad-settings-card" style="display: none;">
+          <h3 class="form-label">Team Match Settings</h3>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label" for="input-team-half-length">Half Duration (m)</label>
+              <input class="form-input" type="number" id="input-team-half-length" min="5" max="60" value="25">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="select-team-player-count">Players On Pitch</label>
+              <select class="form-select" id="select-team-player-count">
+                <option value="7">7v7 Format</option>
+                <option value="8">8v8 Format</option>
+                <option value="9" selected>9v9 Format</option>
+                <option value="10">10v10 Format</option>
+                <option value="11">11v11 Format</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="select-team-formation">Default Formation</label>
+            <select class="form-select" id="select-team-formation"></select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Team Crest / Icon</label>
+            <div style="display: flex; align-items: center; gap: 12px;">
+              <div id="squad-team-icon-preview" class="app-logo-clickable" style="width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 28px; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-card); overflow: hidden;" title="Click to edit icon">
+                ⚽
+              </div>
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-edit-team-icon" style="flex: 1;">Change Icon...</button>
+            </div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-primary btn-sm" id="btn-save-team-settings" style="flex: 1;">Save Settings</button>
+            <button class="btn btn-secondary btn-sm" id="btn-squad-board-trigger" style="flex: 1;">📋 Tactics Board</button>
+          </div>
+        </div>
+
+        <!-- Squad Roster Manager -->
+        <div class="card" id="squad-roster-card" style="display: none;">
+          <div class="card-header">
+            <h3 class="card-title">Squad Roster (<span id="squad-count-label">0</span> players)</h3>
+            <button class="btn btn-primary btn-sm" id="btn-add-player-modal">+ Add Player</button>
+          </div>
+          
+          <div class="list-group" id="squad-player-list">
+            <!-- Dynamic player list rows -->
+          </div>
+        </div>
+      </section>
+
+
+      <!-- ==========================================
+           VIEW 3: TACTICAL FORMATION DESIGNER
+           ========================================== -->
+      <section id="view-tactics" class="app-view">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Formation Designer</h2>
+          </div>
+          <p style="font-size: 13px; color: var(--text-sub);">
+            Create custom grid tactical layouts. Tap anywhere on the grass field to place position badges, label them, and save!
+          </p>
+          
+          <div class="form-group">
+            <label class="form-label" for="designer-player-count">Team Format Size</label>
+            <select class="form-select" id="designer-player-count">
+              <option value="7">7v7 Matches</option>
+              <option value="8">8v8 Matches</option>
+              <option value="9" selected>9v9 Matches</option>
+              <option value="10">10v10 Matches</option>
+              <option value="11">11v11 Matches</option>
+            </select>
+          </div>
+          
+          <div class="form-group">
+            <label class="form-label" for="input-designer-name">Formation Name</label>
+            <input class="form-input" type="text" id="input-designer-name" placeholder="e.g. 3-3-2 Winger Shock">
+          </div>
+        </div>
+
+        <!-- Custom Grid Designer Playground Pitch -->
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span class="form-label">Place <span id="designer-node-counter">0</span> / <span id="designer-max-node-counter">9</span> Nodes</span>
+            <button class="btn btn-sm btn-danger" id="btn-designer-clear" style="padding: 2px 8px; min-height: 28px;">Reset Grid</button>
+          </div>
+
+          <div class="pitch-wrapper" id="designer-pitch-canvas">
+            <div class="pitch-linings"></div>
+            <!-- Placed node elements render here -->
+            <div id="designer-placed-nodes"></div>
+            
+            <div class="pitch-legend">
+              <span class="pitch-legend-badge">Defenders ⬇</span>
+              <span class="pitch-legend-badge">Forwards ⬆</span>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary" id="btn-designer-save" style="width: 100%;">
+          💾 Save Custom Formation
+        </button>
+      </section>
+
+
+      <!-- ==========================================
+           VIEW 4: MATCH HISTORY LOGS
+           ========================================== -->
+      <section id="view-history" class="app-view">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Match History</h2>
+          </div>
+          <div class="list-group" id="history-games-list">
+            <!-- Scroll list of completed historical matches -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Bottom Fixed Navigation Tab Bar -->
+    <nav class="app-nav">
+      <button class="nav-tab active" data-view="match">
+        <span class="nav-tab-icon">⚽</span>
+        <span>Match</span>
+      </button>
+      <button class="nav-tab" data-view="squad">
+        <span class="nav-tab-icon">👥</span>
+        <span>Squad</span>
+      </button>
+      <button class="nav-tab" data-view="tactics">
+        <span class="nav-tab-icon">📐</span>
+        <span>Designer</span>
+      </button>
+      <button class="nav-tab" data-view="history">
+        <span class="nav-tab-icon">⏱️</span>
+        <span>History</span>
+      </button>
+    </nav>
+
+    <!-- ==========================================
+         OVERLAY MODALS (LIGHT DAYLIGHT DIALOGS)
+         ========================================== -->
+    
+    <!-- Modal 1: Create Team Dialog -->
+    <div class="modal-backdrop" id="modal-create-team">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="card-title">Create Team Profile</h3>
+          <button class="btn btn-sm btn-secondary" onclick="document.getElementById('modal-create-team').classList.remove('active')" style="min-height: 28px;">✖</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="input-new-team-name">Team Name</label>
+            <input class="form-input" type="text" id="input-new-team-name" placeholder="e.g. Strikers FC U12">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="input-new-team-color">Jersey Colors</label>
+            <select class="form-select" id="input-new-team-color">
+              <option value="#15803d">Athletic Club Green</option>
+              <option value="#1d4ed8">Deep Ocean Blue</option>
+              <option value="#b91c1c">Crimson Red</option>
+              <option value="#f59e0b">Golden Amber</option>
+              <option value="#6b21a8">Royal Purple</option>
+              <option value="#0f172a">Graphite Black</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-create-team').classList.remove('active')">Cancel</button>
+          <button class="btn btn-primary btn-sm" id="btn-save-new-team">Create Team</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 2: Add/Edit Player Dialog -->
+    <div class="modal-backdrop" id="modal-player-editor">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="card-title" id="player-modal-title">Add Squad Player</h3>
+          <button class="btn btn-sm btn-secondary" onclick="document.getElementById('modal-player-editor').classList.remove('active')" style="min-height: 28px;">✖</button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="input-player-id">
+          <div class="form-group">
+            <label class="form-label" for="input-player-name">Player Name</label>
+            <input class="form-input" type="text" id="input-player-name" placeholder="e.g. Lionel Messi">
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1.2fr; gap: 12px;">
+            <div class="form-group">
+              <label class="form-label" for="input-player-number">Jersey #</label>
+              <input class="form-input" type="number" id="input-player-number" min="0" max="99" placeholder="10">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="select-player-pos">Preferred Role</label>
+              <select class="form-select" id="select-player-pos">
+                <option value="FW">Forward (FW)</option>
+                <option value="MID">Midfielder (MID)</option>
+                <option value="DEF">Defender (DEF)</option>
+                <option value="GK">Goalkeeper (GK)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-player-editor').classList.remove('active')">Cancel</button>
+          <button class="btn btn-primary btn-sm" id="btn-save-player">Add to Squad</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 3: Action Stats Modal (Quick Log) -->
+    <div class="modal-backdrop" id="modal-stats-logger">
+      <div class="modal-content">
+        <div class="modal-header" style="border-bottom: 2px solid var(--text-main);">
+          <div>
+            <h3 class="card-title" id="stats-logger-player-name">Player Name</h3>
+            <span class="period-val" id="stats-logger-player-role">Position: DEF</span>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="document.getElementById('modal-stats-logger').classList.remove('active')" style="min-height: 28px;">✖</button>
+        </div>
+        
+        <div class="modal-body">
+          <!-- Active Playtime Indicator in Modal -->
+          <div style="text-align: center; padding: 4px; background: var(--primary-light); border: var(--border-ui); border-radius: var(--radius-sm); font-weight: 700;">
+            Current Pitch Time: <span id="stats-logger-playtime">0 mins</span>
+          </div>
+          
+          <div class="stat-log-grid">
+            <button class="btn btn-primary stat-log-btn" data-stat="goal">⚽ GOAL</button>
+            <button class="btn btn-secondary stat-log-btn" data-stat="assist">👟 ASSIST</button>
+            <button class="btn btn-secondary stat-log-btn" data-stat="shot">🎯 SHOT</button>
+            <button class="btn btn-secondary stat-log-btn" data-stat="save">🧤 SAVE</button>
+            <button class="btn btn-secondary stat-log-btn" data-stat="foul">⚠️ FOUL</button>
+            <button class="btn btn-accent stat-log-btn" data-stat="yellow">🟨 YELLOW</button>
+            <button class="btn btn-danger stat-log-btn" data-stat="red">🟥 RED CARD</button>
+            <button class="btn btn-secondary stat-log-btn" id="btn-stats-sub-trigger" style="grid-column: span 2; border: 2px dashed var(--accent); background: var(--accent-light); color: hsl(28, 100%, 30%);">
+              🔄 Substitute Out
+            </button>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-stats-logger').classList.remove('active')" style="width: 100%;">Close Panel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 4: Formation Custom Node Definer (In designer view) -->
+    <div class="modal-backdrop" id="modal-designer-node">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="card-title">Configure Pitch Node</h3>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label" for="input-node-label">Position Code (e.g. ST, LW, RCM)</label>
+            <input class="form-input" type="text" id="input-node-label" maxlength="4" placeholder="ST">
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="select-node-role">General Position Role</label>
+            <select class="form-select" id="select-node-role">
+              <option value="FW">Forward (FW)</option>
+              <option value="MID">Midfielder (MID)</option>
+              <option value="DEF">Defender (DEF)</option>
+              <option value="GK">Goalkeeper (GK)</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger btn-sm" id="btn-designer-delete-node">Delete Node</button>
+          <button class="btn btn-primary btn-sm" id="btn-designer-save-node">Save Node</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 5: Custom Team Switcher Panel -->
+    <div class="modal-backdrop" id="modal-team-switcher">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 class="card-title">Switch Active Team</h3>
+          <button class="btn btn-sm btn-secondary" onclick="document.getElementById('modal-team-switcher').classList.remove('active')" style="min-height: 28px;">✖</button>
+        </div>
+        <div class="modal-body" style="gap: 8px;" id="team-switcher-list">
+          <!-- Render teams here -->
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-team-switcher').classList.remove('active')">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 6: View Match History Detail Modal -->
+    <div class="modal-backdrop" id="modal-history-detail">
+      <div class="modal-content">
+        <div class="modal-header" style="border-bottom: 2px solid var(--text-main);">
+          <div>
+            <h3 class="card-title" id="history-detail-title">Match Report</h3>
+            <span class="period-val" id="history-detail-date">Date</span>
+          </div>
+          <button class="btn btn-sm btn-secondary" onclick="document.getElementById('modal-history-detail').classList.remove('active')" style="min-height: 28px;">✖</button>
+        </div>
+        <div class="modal-body" style="gap: 16px;">
+          <!-- Scoreline panel -->
+          <div style="display: flex; justify-content: space-between; align-items: center; background: var(--bg-main); padding: 12px; border: var(--border-ui); border-radius: var(--radius-md); font-weight: 800; font-size: 16px;">
+            <span id="history-detail-us" style="color: var(--primary);">Us</span>
+            <span style="font-size: 20px;" id="history-detail-score">3 - 1</span>
+            <span id="history-detail-them">Them</span>
+          </div>
+          
+          <div>
+            <h4 class="form-label" style="margin-bottom: 6px;">Individual Playtimes & Stats</h4>
+            <div class="list-group" id="history-detail-player-stats" style="font-size: 12px; max-height: 200px; overflow-y: auto;">
+              <!-- Dynamic player rows with playtimes -->
+            </div>
+          </div>
+
+          <div>
+            <h4 class="form-label" style="margin-bottom: 6px;">Match Event log</h4>
+            <div class="list-group scroll-y" id="history-detail-events" style="font-size: 12px; max-height: 180px;">
+              <!-- Detailed timeline events -->
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-history-detail').classList.remove('active')" style="width: 100%;">Close Report</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 7: Player Heatmap Detail Modal -->
+    <div class="modal-backdrop" id="modal-player-heatmap">
+      <div class="modal-content modal-content-tall">
+        <div class="modal-header" style="border-bottom: 2px solid var(--text-main);">
+          <div>
+            <h3 class="card-title" id="heatmap-player-name">Player Name</h3>
+            <span class="period-val" id="heatmap-player-meta">MID · 3 Matches · 87 mins</span>
+          </div>
+          <button class="btn btn-sm btn-secondary" id="btn-close-heatmap-x" style="min-height: 28px;">✖</button>
+        </div>
+        <div class="modal-body" style="gap: 12px; display: flex; flex-direction: column;">
+          <!-- Stat pills row -->
+          <div id="heatmap-stat-pills" style="display: flex; gap: 8px; flex-wrap: wrap;"></div>
+          
+          <!-- Pitch + canvas heatmap -->
+          <div class="pitch-wrapper heatmap-pitch" style="position: relative; overflow: hidden;">
+            <div class="pitch-linings"></div>
+            <canvas id="heatmap-canvas" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none;"></canvas>
+            <div class="pitch-legend">
+              <span class="pitch-legend-badge">Defenders ⬇</span>
+              <span class="pitch-legend-badge">Forwards ⬆</span>
+            </div>
+          </div>
+
+          <!-- Position breakdown legend table -->
+          <div id="heatmap-legend-table" style="max-height: 200px; overflow-y: auto;"></div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" id="btn-close-heatmap-footer" style="width: 100%;">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal 8: Team Icon Picker Dialog -->
+    <div class="modal-backdrop" id="modal-team-icon">
+      <div class="modal-content" style="max-width: 380px;">
+        <div class="modal-header">
+          <h3 class="card-title">Select Team Icon</h3>
+          <button class="btn btn-sm btn-secondary" onclick="document.getElementById('modal-team-icon').classList.remove('active')" style="min-height: 28px;">✖</button>
+        </div>
+        <div class="modal-body" style="gap: 16px;">
+          
+          <!-- Current Preview -->
+          <div style="display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 6px; background: rgba(0,0,0,0.15); padding: 14px; border-radius: 8px;">
+            <div id="icon-picker-preview" style="width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; font-size: 40px; border-radius: 12px; border: 2px solid var(--primary); background: var(--bg-card); overflow: hidden;">
+              ⚽
+            </div>
+            <span style="font-size: 11px; color: var(--text-sub); font-weight: 600;">ACTIVE ICON PREVIEW</span>
+          </div>
+
+          <!-- Presets Selection -->
+          <div>
+            <label class="form-label">Choose Preset Icon</label>
+            <div id="icon-presets-grid" style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-top: 6px;"></div>
+          </div>
+
+          <!-- Upload Custom Image -->
+          <div>
+            <label class="form-label">Upload Custom Crest / Logo</label>
+            <div style="display: flex; gap: 8px; margin-top: 6px;">
+              <input type="file" id="input-custom-team-icon" accept="image/*" style="display: none;">
+              <button class="btn btn-secondary btn-sm" style="flex: 1;" onclick="document.getElementById('input-custom-team-icon').click()">📁 Choose File...</button>
+              <button class="btn btn-danger btn-sm" id="btn-reset-team-icon" style="padding: 6px 12px;" title="Reset to default soccer ball">Reset</button>
+            </div>
+            <span style="font-size: 10px; color: var(--text-sub); margin-top: 4px; display: block;">Supports PNG, JPG, SVG, WebP. Automatically optimized.</span>
+          </div>
+
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('modal-team-icon').classList.remove('active')">Cancel</button>
+          <button class="btn btn-primary btn-sm" id="btn-save-team-icon">Save Icon</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tactics Board Full-Screen Slide-Up Overlay -->
+    <div class="board-overlay" id="board-overlay">
+      <div class="board-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <span class="board-header-icon" style="font-size: 24px;">📋</span>
+          <div>
+            <h2 class="board-title" id="board-team-title" style="font-size: 15px; font-weight: 800; line-height: 1.1;">Tactics Board</h2>
+            <p class="board-subtitle" id="board-formation-subtitle" style="font-size: 11px; font-weight: 700; color: var(--text-sub);">Tactical Setup</p>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-secondary" id="btn-close-board" style="min-height: 36px; padding: 4px 12px; font-weight: 800;">
+          ✖ Close
+        </button>
+      </div>
+
+      <!-- Control Buttons at Top -->
+      <div class="board-controls">
+        <div style="display: flex; gap: 8px; width: 100%;">
+          <button class="btn btn-secondary btn-sm" id="btn-board-add-opponent" style="flex: 1; min-height: 38px;">+ Opponent</button>
+          <button class="btn btn-secondary btn-sm" id="btn-board-reset" style="flex: 1; min-height: 38px;">Reset Field</button>
+          <button class="btn btn-danger btn-sm" id="btn-board-clear-drawings" style="flex: 1; min-height: 38px; border-color: hsl(350, 85%, 35%);">Clear Lines</button>
+        </div>
+
+        <!-- Set Defense Formation Button -->
+        <div class="board-defense-picker-wrapper">
+          <button class="btn btn-secondary btn-sm board-defense-trigger" id="btn-board-set-defense" style="width: 100%; min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+            <span style="display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 13px;">&#x1F6E1;&#xFE0F;</span>
+              <span>Set Defense:</span>
+              <strong id="board-defense-label" style="color: var(--primary-dark);">No Defense</strong>
+            </span>
+            <span id="board-defense-chevron" style="font-size: 10px; transition: transform 0.2s;">&#x25BC;</span>
+          </button>
+
+          <!-- Formation picker dropdown (hidden by default) -->
+          <div class="board-defense-dropdown" id="board-defense-dropdown">
+            <div class="board-defense-list" id="board-defense-list">
+              <!-- Populated dynamically by board.js -->
+            </div>
+          </div>
+        </div>
+        
+        <!-- Color Picker -->
+        <div style="display: flex; gap: 12px; justify-content: center; align-items: center; margin-top: 4px;">
+          <span class="form-label" style="margin-bottom: 0; font-size: 11px;">Pen Color:</span>
+          <div style="display: flex; gap: 10px;">
+            <button class="color-dot active" data-color="red" style="background-color: var(--danger); border: 2px solid var(--text-main);" title="Red"></button>
+            <button class="color-dot" data-color="blue" style="background-color: var(--info); border: 2px solid var(--text-main);" title="Blue"></button>
+            <button class="color-dot" data-color="black" style="background-color: var(--text-main); border: 2px solid var(--text-main);" title="Black"></button>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Board Pitch Area -->
+      <div class="board-pitch-container">
+        <div class="pitch-wrapper" id="board-pitch-wrapper">
+          <div class="pitch-linings"></div>
+          <canvas class="tactics-canvas" id="tactics-canvas"></canvas>
+          <div id="board-players-container"></div>
+          <!-- Draggable Ball element -->
+          <div class="tactics-ball" id="tactics-ball" style="left: 50%; top: 50%;">⚽</div>
+          
+          <div class="pitch-legend">
+            <span class="pitch-legend-badge">Defenders ⬇</span>
+            <span class="pitch-legend-badge">Forwards ⬆</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Javascript Modules -->
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>

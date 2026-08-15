@@ -1,0 +1,17 @@
+{
+  "short_name": "Soccer Sub Tracker",
+  "name": "Soccer Team Sub & Stats Tracker",
+  "icons": [
+    {
+      "src": "icon.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "./index.html",
+  "background_color": "#f8fafc",
+  "theme_color": "#15803d",
+  "display": "standalone",
+  "orientation": "portrait"
+}
